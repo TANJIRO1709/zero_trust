@@ -1,2 +1,3 @@
 #!/bin/bash
-uvicorn main:app --host 0.0.0.0 --port 10000
+source venv/bin/activate  # Activate virtual environment
+uvicorn main:app --host 0.0.0.0 --port 8000  # Run Uvicorn
