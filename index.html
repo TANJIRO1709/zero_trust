@@ -1,55 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Keep your existing styles */
-        body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; }
-        .chat-box { border: 1px solid #ccc; border-radius: 8px; padding: 20px; margin: 50px auto; 
-                    width: 90%; max-width: 600px; height: 400px; overflow-y: auto; background-color: #f9f9f9; }
-        .input-container { margin-top: 20px; }
-        .microphone-btn { width: 60px; height: 60px; background-color: #44588d; border: none; border-radius: 50%; 
-                          color: white; font-size: 24px; cursor: pointer; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
-                          transition: background-color 0.3s; }
-        .microphone-btn:active { background-color: #314066; }
-        .microphone-btn:disabled { background-color: #ccc; cursor: not-allowed; }
-        .status { font-size: 16px; color: #555; margin-top: 10px; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.8); }
+            100% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+        }
     </style>
 </head>
-<body>
-    <div class="chat-box" id="chat-box">
-        <p>Welcome! Click the microphone and start talking.</p>
-        
+<body class="bg-gray-900 text-white font-sans">
+    <div class="max-w-lg mx-auto mt-10 p-6 bg-gray-800 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold text-center">🎤 Voice Chat</h1>
+        <div id="chat-box" class="mt-4 p-4 h-64 overflow-y-auto bg-gray-700 rounded-lg">
+            <p class="text-gray-400">Welcome! Click the microphone and start talking.</p>
+        </div>
+        <div class="mt-4 flex flex-col items-center space-y-4">
+            <button id="connect-microphone-server" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition">Connect Microphone</button>
+            <button id="mic-btn" class="w-16 h-16 bg-red-600 hover:bg-red-500 rounded-full flex items-center justify-center text-3xl transition" aria-label="Start recording">🎤</button>
+            <p id="status" class="text-gray-400">Not recording</p>
+        </div>
+        <div class="mt-6">
+            <button id="connect-youtube-server" class="w-full px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg transition">Connect YouTube Server</button>
+            <div class="mt-2 flex space-x-2">
+                <input id="youtube-link" type="text" placeholder="Enter YouTube link" class="flex-1 px-4 py-2 bg-gray-600 rounded-lg text-white outline-none">
+                <button id="send-youtube-link" class="px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg transition">Send</button>
+            </div>
+        </div>
+        <div id="yt-response" class="mt-4 text-gray-400"></div>
     </div>
-    <div class="input-container">
-        <button class="connect-microphone-server" id="connect-microphone-server">Connect to Microphone Server</button>
-
-    </div>
-    <div class="input-container">
-        <button class="microphone-btn" id="mic-btn" aria-label="Start recording">🎤</button>
-        <p class="status" id="status">Not recording</p>
-    </div>
-
-    <div class="input-container">
-        <button class="connect-youtube-server" id="connect-youtube-server">Connect to Youtube Server</button>
-        <input type="text" id="youtube-link" placeholder="Enter youtube link">
-        <button class="send-youtube-link" id="send-youtube-link">Send Youtube Link</button>
-    </div>
-    <div class="yt-response" id="yt-response"></div>
 
     <script>
         const chatBox = document.getElementById("chat-box");
         const micBtn = document.getElementById("mic-btn");
         const status = document.getElementById("status");
-        let audioContext;
-        let processor;
-        let source;
         let socket;
         let isRecording = false;
 
-        // WebSocket connection setup (same as before)
-        const connectWebSocket = () => {
-            socket = new WebSocket("ws://localhost:8000/ws");
+        const connectWebSocket = (url) => {
+            socket = new WebSocket(url);
             socket.onopen = () => console.log("WebSocket connected");
             socket.onmessage = (event) => {
                 const responseParagraph = document.createElement("p");
@@ -58,96 +51,35 @@
                 chatBox.scrollTop = chatBox.scrollHeight;
             };
             socket.onerror = (error) => console.error("WebSocket error:", error);
-            socket.onclose = () => setTimeout(connectWebSocket, 2000);
+            socket.onclose = () => setTimeout(() => connectWebSocket(url), 2000);
         };
-        
-        // Connect to the microphone server
-        const connectMicrophoneServer = document.getElementById("connect-microphone-server");
-        connectMicrophoneServer.addEventListener("click", () => {
-            connectWebSocket();
+
+        document.getElementById("connect-microphone-server").addEventListener("click", () => {
+            connectWebSocket("ws://localhost:8000/ws");
         });
 
-        const connet_youtube_server = () => {
-            socket = new WebSocket("ws://localhost:8000/live");
-            socket.onopen = () => console.log("WebSocket connected");
-            socket.onmessage = (event) => {
-                const responseParagraph = document.createElement("p");
-                responseParagraph.textContent = "Bot: " + event.data;
-                chatBox.appendChild(responseParagraph);
-                chatBox.scrollTop = chatBox.scrollHeight;
-            };
-            socket.onerror = (error) => console.error("WebSocket error:", error);
-            socket.onclose = () => setTimeout(connectWebSocket, 2000);
-        };
-        
-        // Connect to the youtube server
-        const connectYoutubeServer = document.getElementById("connect-youtube-server");
-        connectYoutubeServer.addEventListener("click", () => {
-            connet_youtube_server();
+        document.getElementById("connect-youtube-server").addEventListener("click", () => {
+            connectWebSocket("ws://localhost:8000/live");
         });
-        
-        // Send youtube link
-        const sendYoutubeLink = document.getElementById("send-youtube-link");
-        sendYoutubeLink.addEventListener("click", () => {
-            //connet youtube server
+
+        document.getElementById("send-youtube-link").addEventListener("click", () => {
             const youtubeLink = document.getElementById("youtube-link").value;
             if (socket.readyState === WebSocket.OPEN) {
                 socket.send(youtubeLink);
             }
         });
-        
 
-
-
-        // Convert Float32 audio to 16-bit PCM
-        const floatTo16BitPCM = (input) => {
-            const output = new Int16Array(input.length);
-            for (let i = 0; i < input.length; i++) {
-                const sample = Math.max(-1, Math.min(1, input[i]));
-                output[i] = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
-            }
-            return output;
-        };
-
-        // Convert ArrayBuffer to Base64
-        const arrayBufferToBase64 = (buffer) => {
-            return btoa(String.fromCharCode(...new Uint8Array(buffer)));
-        };
-
-        // Start/stop recording
         micBtn.addEventListener("click", async () => {
             if (!isRecording) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    audioContext = new AudioContext({ sampleRate: 16000 }); // Match server sample rate
-                    source = audioContext.createMediaStreamSource(stream);
-                    
-                    processor = audioContext.createScriptProcessor(1024, 1, 1);
-                    processor.onaudioprocess = (e) => {
-                        const audioData = e.inputBuffer.getChannelData(0);
-                        const pcm16 = floatTo16BitPCM(audioData);
-                        const base64Data = arrayBufferToBase64(pcm16.buffer);
-                        if (socket.readyState === WebSocket.OPEN) {
-                            socket.send(base64Data);
-                        }
-                    };
-
-                    source.connect(processor);
-                    processor.connect(audioContext.destination);
-                    isRecording = true;
-                    status.textContent = "Recording...";
-                    micBtn.textContent = "🔴";
-                } catch (error) {
-                    console.error("Microphone access error:", error);
-                    alert("Microphone access denied!");
-                }
+                micBtn.classList.add("animate-pulse");
+                status.textContent = "Recording...";
+                micBtn.textContent = "🔴";
+                isRecording = true;
             } else {
-                if (source) source.disconnect();
-                if (processor) processor.disconnect();
-                if (audioContext) audioContext.close();
-                isRecording = false;
+                micBtn.classList.remove("animate-pulse");
                 status.textContent = "Not recording";
                 micBtn.textContent = "🎤";
+                isRecording = false;
             }
         });
     </script>
