@@ -25,6 +25,7 @@ numpy==2.2.4
 openai==1.68.2
 propcache==0.3.0
 pydab==0.0.0.dev0
+pydub
 pydantic==2.10.6
 pydantic_core==2.27.2
 python-dateutil==2.9.0.post0
