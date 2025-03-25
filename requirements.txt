@@ -5,3 +5,5 @@ aiofiles
 aiobotocore==2.4.2
 aiofiles==23.1.0
 openai
+requests==2.31.0  # Use the latest stable version
+
