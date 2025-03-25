@@ -4,3 +4,4 @@ aiobotocore
 aiofiles
 aiobotocore==2.4.2
 aiofiles==23.1.0
+openai
